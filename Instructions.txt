@@ -1,0 +1,37 @@
+Objectives:
+
+This homework makes you familiar with the design and implementations of architectural tactics. An important goal of this assignment is to emphasize that designing architecture is important but implementing the design, testing and maintaining the design decisions are critical.
+
+Objectives:
+
+You are supposed to implement a “Fault Recovery” Tactic in the form of Active Redundancy. The implementation is a minimum prototyping of the tactic than the full implementation of a system.
+
+Please consider the following items:
+
+Select a domain
+
+Develop a critical process ( with minimum functionality)
+
+Design a Non-deterministic failure in this process which makes it crash.
+
+Implement Heartbeat to monitor the process
+
+Your Fault Recovery implementation should have all the required fault detection and recovery features.
+
+Rule 1: Implement active node and redundant node on different processes
+
+Rule 2: In your active redundancy solution synchronize two replicas on the operations performed by each of them.
+
+Rule 3: Make sure your fault detection first works, integrate the fault recovery with your code in assignment 1.
+
+Constraints: 
+
+- Active node and redundant nodes must be processes, not threads.
+
+- Programming Languages: Your choice not limited to Java or C#. You can use the existing frameworks or implement from scratch.
+
+Deliverables:
+
+- Runnable Source Code
+
+- Read me file including guidance on how to run the code, list of frameworks used.

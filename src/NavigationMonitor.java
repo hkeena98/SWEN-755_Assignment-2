@@ -3,6 +3,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Date;
+import java.rmi.Naming;
+
 
 public class NavigationMonitor {
     private int checkingInterval;
@@ -12,6 +14,9 @@ public class NavigationMonitor {
     private FaultMonitor faultMonitor;
 
     public NavigationMonitor() {
+        //System.setProperty("java.rmi.server.hostname","192.168.1.2");
+
+
         this.checkingInterval = 2;
         this.checkingTime = 0;
         this.expireTime = 0;
@@ -34,18 +39,21 @@ public class NavigationMonitor {
     public static void main(String[] args) {
         try {
             NavigationMonitor navMonitor = new NavigationMonitor();
-            System.out.println("\nBeginning Navigation System Multiprocess Testing Suite...\n");
-            for(int x = 0; x < 20; x++) {
-                System.out.println("\nBeginning Multiprocess Navigation System Test #"+(x+1)+"\n");
-                ProcessBuilder monitorProcess = new ProcessBuilder("java", "Navigation");
-                Process navProcess = monitorProcess.start();
-                BufferedReader processReader = new BufferedReader(new InputStreamReader(navProcess.getInputStream()));
-                String output = "";
-                while((output = processReader.readLine()) != null) {
-                    System.out.println(output);
-                }
-                TimeUnit.SECONDS.sleep(navMonitor.getCheckingInterval());
-            }
+            //System.out.println("\nBeginning Navigation System Multiprocess Testing Suite...\n");
+            //for(int x = 0; x < 20; x++) {
+            //    System.out.println("\nBeginning Multiprocess Navigation System Test #"+(x+1)+"\n");
+            //    ProcessBuilder monitorProcess = new ProcessBuilder("java", "Navigation");
+            //    Process navProcess = monitorProcess.start();
+            //    BufferedReader processReader = new BufferedReader(new InputStreamReader(navProcess.getInputStream()));
+            //    String output = "";
+            //    while((output = processReader.readLine()) != null) {
+            //        System.out.println(output);
+            //    }
+            //    TimeUnit.SECONDS.sleep(navMonitor.getCheckingInterval());
+            //}
+            Navigation testNav = (Navigation)Naming.lookup("//localhost/Navigation");
+            System.out.println(testNav.isAlive());
+
         }
         catch(Exception ex) {
             System.out.println("ERROR: "+ex);

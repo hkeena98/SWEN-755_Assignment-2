@@ -9,18 +9,13 @@ import java.rmi.registry.*;
 import javax.management.remote.rmi.RMIServer;
 import javax.swing.text.StyledEditorKit.BoldAction;
 
-public class Navigation extends UnicastRemoteObject {
+public class Navigation extends UnicastRemoteObject implements NavigationInterface {
     private GPS gps;
     private List<VisualSensor> visualSensors = new ArrayList<>();
     private boolean alive;
     private int sendingInterval;
 
     public Navigation() throws RemoteException {
-        //System.setProperty("java.rmi.server.hostname","127.0.0.1");
-        //System.setProperty("java.rmi.server.hostname","192.168.1.2");
-
-
-
         this.alive = true;
         this.sendingInterval = 3;
         this.gps = new GPS();
@@ -29,7 +24,7 @@ public class Navigation extends UnicastRemoteObject {
     }
 
 
-    public boolean SendHeartBeat() {
+    public boolean SendHeartBeat() throws RemoteException {
         boolean foundNewRoute = gps.findNewRoute();
         boolean isDisconnected = gps.isDisconnected();
         boolean checkedSensors = checkSensors();
@@ -67,7 +62,7 @@ public class Navigation extends UnicastRemoteObject {
 
     public static void main(String[] args) {
         try {
-            System.out.println("RMI server started");
+            System.out.println("RMI Navigation Server Started");
 
             Navigation nav = new Navigation();
             LocateRegistry.createRegistry(1099);

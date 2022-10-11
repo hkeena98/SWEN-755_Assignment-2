@@ -51,8 +51,8 @@ public class NavigationMonitor {
             //    }
             //    TimeUnit.SECONDS.sleep(navMonitor.getCheckingInterval());
             //}
-            Navigation testNav = (Navigation)Naming.lookup("//localhost/Navigation");
-            System.out.println(testNav.isAlive());
+            NavigationInterface testNav = (Navigation)Naming.lookup("//localhost/Navigation");
+            System.out.println("Test Navigation: "+testNav.SendHeartBeat());
 
         }
         catch(Exception ex) {

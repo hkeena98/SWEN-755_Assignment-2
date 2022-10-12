@@ -2,8 +2,13 @@ import java.util.concurrent.TimeUnit;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.rmi.Naming;
+import java.util.LinkedList;
+import java.util.Queue;
+import java.util.Random;
 
 
 public class NavigationMonitor {
@@ -14,10 +19,7 @@ public class NavigationMonitor {
     private FaultMonitor faultMonitor;
 
     public NavigationMonitor() {
-        //System.setProperty("java.rmi.server.hostname","192.168.1.2");
-
-
-        this.checkingInterval = 2;
+        this.checkingInterval = 4;
         this.checkingTime = 0;
         this.expireTime = 0;
         this.lastUpdatedTime = 0;
@@ -36,24 +38,60 @@ public class NavigationMonitor {
         this.faultMonitor.sendFaultNotification(this.expireTime);
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         try {
             NavigationMonitor navMonitor = new NavigationMonitor();
-            //System.out.println("\nBeginning Navigation System Multiprocess Testing Suite...\n");
-            //for(int x = 0; x < 20; x++) {
-            //    System.out.println("\nBeginning Multiprocess Navigation System Test #"+(x+1)+"\n");
-            //    ProcessBuilder monitorProcess = new ProcessBuilder("java", "Navigation");
-            //    Process navProcess = monitorProcess.start();
-            //    BufferedReader processReader = new BufferedReader(new InputStreamReader(navProcess.getInputStream()));
-            //    String output = "";
-            //    while((output = processReader.readLine()) != null) {
-            //        System.out.println(output);
-            //    }
-            //    TimeUnit.SECONDS.sleep(navMonitor.getCheckingInterval());
-            //}
-            NavigationInterface testNav = (Navigation)Naming.lookup("//localhost/Navigation");
-            System.out.println("Test Navigation: "+testNav.SendHeartBeat());
+            Queue<Boolean> operationPool = new LinkedList<Boolean>();
 
+            System.out.println("\nBeginning Multiprocess Navigation System Active Redundancy Test\n");
+            ProcessBuilder monitorProcessBase = new ProcessBuilder("java", "Navigation", Integer.toString(1099));
+            Process navProcessBase = monitorProcessBase.start();
+            ProcessHandle processHandle = navProcessBase.toHandle();
+
+
+            BufferedReader processReader = new BufferedReader(new InputStreamReader(navProcessBase.getInputStream()));
+            String output = "";
+
+            output = processReader.readLine();
+            System.out.println(output+"\n");
+
+            boolean isAlive = true;
+
+            while(isAlive == true) {
+                NavigationInterface navRMIInterfaceBase = (NavigationInterface)Naming.lookup("Navigation");
+                isAlive = navRMIInterfaceBase.SendHeartBeat();
+                System.out.println("Navigation Base Test: "+isAlive+"\n");
+                operationPool.add(isAlive);
+            }
+            processHandle.destroy();
+            
+            System.out.println("\nBase Operation ERROR - Beginning Redundancy Process\n");
+
+            TimeUnit.SECONDS.sleep(navMonitor.getCheckingInterval()); 
+
+            ProcessBuilder monitorProcessRedundancy = new ProcessBuilder("java", "Navigation", Integer.toString(1099));
+            Process navProcessRedundancy = monitorProcessRedundancy.start();            
+
+            processReader = new BufferedReader(new InputStreamReader(navProcessRedundancy.getInputStream()));
+            output = "";
+            output = processReader.readLine();
+            System.out.println(output+"\n");
+
+            NavigationInterface navRMIInterfaceRedundancy = (NavigationInterface)Naming.lookup("Navigation");
+            navRMIInterfaceRedundancy.syncOperations(operationPool);
+            operationPool.clear();
+
+            isAlive = true;
+            while(isAlive == true) {
+                isAlive = navRMIInterfaceRedundancy.SendHeartBeat();
+                System.out.println("Navigation Redundancy Test: "+isAlive+"\n");
+                operationPool.add(isAlive);
+            }
+            navRMIInterfaceRedundancy.syncOperations(operationPool);
+
+            ArrayList operations = navRMIInterfaceRedundancy.returnOperations();
+            System.out.println("Completed Operations: "+Arrays.toString(operations.toArray()));
+          
         }
         catch(Exception ex) {
             System.out.println("ERROR: "+ex);

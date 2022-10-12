@@ -14,6 +14,8 @@ Develop a critical process ( with minimum functionality)
 
 Design a Non-deterministic failure in this process which makes it crash.
 
+COURSE INSTRUCTIONS:
+
 Implement Heartbeat to monitor the process
 
 Your Fault Recovery implementation should have all the required fault detection and recovery features.

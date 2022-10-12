@@ -1,11 +1,13 @@
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.rmi.Naming;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.rmi.registry.*;
-
+import java.util.LinkedList;
+import java.util.Queue;
 import javax.management.remote.rmi.RMIServer;
 import javax.swing.text.StyledEditorKit.BoldAction;
 
@@ -14,11 +16,14 @@ public class Navigation extends UnicastRemoteObject implements NavigationInterfa
     private List<VisualSensor> visualSensors = new ArrayList<>();
     private boolean alive;
     private int sendingInterval;
+    private ArrayList operations;
 
     public Navigation() throws RemoteException {
+        super(0);
         this.alive = true;
         this.sendingInterval = 3;
         this.gps = new GPS();
+        this.operations = new ArrayList<Boolean>();
         visualSensors.add(new VisualSensor());
         visualSensors.add(new VisualSensor());
     }
@@ -29,14 +34,21 @@ public class Navigation extends UnicastRemoteObject implements NavigationInterfa
         boolean isDisconnected = gps.isDisconnected();
         boolean checkedSensors = checkSensors();
         boolean heartBeat = ((foundNewRoute || isDisconnected) && checkedSensors);
-        //if(heartBeat == true) {
-            //System.out.println("\nNavigation HeartBeat - HEALTHY\n");
-        //}
-        //else {
-            //System.out.println("\nNavigation Heartbeat - FLATLINE\n");
-        //}
         this.setAlive(heartBeat);
         return heartBeat;
+    }
+
+    public void syncOperations(Queue<Boolean> queue) throws RemoteException {
+        for(int i = 0; i < queue.size(); i++) {
+            boolean head = queue.peek();
+            if(head == true) {
+                this.operations.add(head);
+            }
+        }
+    }
+
+    public ArrayList<Boolean> returnOperations() throws RemoteException {
+        return this.operations;
     }
 
     private boolean checkSensors(){
@@ -59,34 +71,18 @@ public class Navigation extends UnicastRemoteObject implements NavigationInterfa
     public void setAlive(boolean _alive) {
         this.alive = _alive;
     }
+    
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws RemoteException {
         try {
-            System.out.println("RMI Navigation Server Started");
-
             Navigation nav = new Navigation();
-            LocateRegistry.createRegistry(1099);
-            Naming.rebind("//localhost/Navigation", nav);
-            System.out.println("PeerServer bound in registry");
+            String portnum = args[0];
 
-            
-            //Server obj = new Server();
-            //Hello stub = (Hello) UnicastRemoteObject.exportObject(obj, 0);
-            //Navigation nav = new Navigation();
-
-            //Navigation stub = (Navigation)UnicastRemoteObject.exportObject(nav, 0);
-
-            // Bind the remote object's stub in the registry
-            //Registry registry = LocateRegistry.getRegistry();
-            //registry.bind("Hello", stub);
-
-            //System.err.println("Server ready");
-            
-            //Navigation nav = new Navigation();
             //while(nav.isAlive() == true) {
-            //    nav.SendHeartBeat();
-            //    TimeUnit.SECONDS.sleep(nav.getSendingInterval());
-            //}
+            System.out.println("RMI Navigation Server Started on Port - "+portnum);
+            Registry reg = LocateRegistry.createRegistry(Integer.parseInt(portnum));
+            reg.rebind("Navigation", nav);
+            System.out.println("RMI Navigation Server Bound in Registry");
         }
         catch(Exception ex) {
             System.out.println("ERROR: "+ex);

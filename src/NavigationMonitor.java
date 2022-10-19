@@ -5,6 +5,7 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.rmi.Naming;
 import java.util.LinkedList;
 import java.util.Queue;
@@ -56,21 +57,36 @@ public class NavigationMonitor {
             System.out.println(output+"\n");
 
             boolean isAlive = true;
-
+            int testCounter = 0;
             while(isAlive == true) {
+                testCounter++;
                 NavigationInterface navRMIInterfaceBase = (NavigationInterface)Naming.lookup("Navigation");
-                isAlive = navRMIInterfaceBase.SendHeartBeat();
-                System.out.println("Navigation Base Test: "+isAlive+"\n");
+                HashMap<String, Boolean> heartBeat = navRMIInterfaceBase.SendHeartBeat();
+                isAlive = heartBeat.get("Is_Alive");
+                //isAlive = navRMIInterfaceBase.SendHeartBeat();
+                System.out.println("Navigation BASE SERVER Operation #"+testCounter+": "+isAlive+"\n");
+                if(isAlive == true) {
+                    System.out.println("BASE SERVER OPERATING AS NORMAL...\n");
+                }
+                else {
+                    System.out.println("BASE SERVER HAS ENCOUNTERED ERROR...\n");
+                }
+                System.out.println("BASE SERVER RESPONSE #"+testCounter+": "+heartBeat+"\n");
                 operationPool.add(isAlive);
             }
             processHandle.destroy();
+
+            System.out.println("\nBASE SERVER ERROR - Base Server No Longer Functional\n");
+
             
-            System.out.println("\nBase Operation ERROR - Beginning Redundancy Process\n");
+            System.out.println("\nInitiating REDUNDANCY SERVER - Beginning Redundancy Process\n");
 
             TimeUnit.SECONDS.sleep(navMonitor.getCheckingInterval()); 
 
             ProcessBuilder monitorProcessRedundancy = new ProcessBuilder("java", "Navigation", Integer.toString(1099));
-            Process navProcessRedundancy = monitorProcessRedundancy.start();            
+            Process navProcessRedundancy = monitorProcessRedundancy.start();
+            
+            System.out.println("\nREDUNDANCY SERVER INITIALIZED\n");
 
             processReader = new BufferedReader(new InputStreamReader(navProcessRedundancy.getInputStream()));
             output = "";
@@ -82,15 +98,26 @@ public class NavigationMonitor {
             operationPool.clear();
 
             isAlive = true;
+            int testCounter2 = 0;
             while(isAlive == true) {
-                isAlive = navRMIInterfaceRedundancy.SendHeartBeat();
-                System.out.println("Navigation Redundancy Test: "+isAlive+"\n");
+                testCounter2++;
+                HashMap<String, Boolean> heartBeat = navRMIInterfaceRedundancy.SendHeartBeat();
+                isAlive = heartBeat.get("Is_Alive");
+                //isAlive = navRMIInterfaceRedundancy.SendHeartBeat();
+                System.out.println("Navigation REDUNDANCY SERVER Operation #"+testCounter2+": "+isAlive+"\n");
+                if(isAlive == true) {
+                    System.out.println("REDUNDANCY SERVER OPERATING AS NORMAL...\n");
+                }
+                else {
+                    System.out.println("REDUNDANCY SERVER HAS ENCOUNTERED ERROR...\n");
+                }
+                System.out.println("REDUNDANCY SERVER RESPONSE #"+testCounter2+": "+heartBeat+"\n");
                 operationPool.add(isAlive);
             }
             navRMIInterfaceRedundancy.syncOperations(operationPool);
 
             ArrayList operations = navRMIInterfaceRedundancy.returnOperations();
-            System.out.println("Completed Operations: "+Arrays.toString(operations.toArray()));
+            System.out.println("Completed Operations: "+Arrays.toString(operations.toArray())+"\n");
           
         }
         catch(Exception ex) {

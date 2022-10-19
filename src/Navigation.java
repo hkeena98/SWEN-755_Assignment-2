@@ -10,6 +10,7 @@ import java.util.LinkedList;
 import java.util.Queue;
 import javax.management.remote.rmi.RMIServer;
 import javax.swing.text.StyledEditorKit.BoldAction;
+import java.util.HashMap;
 
 public class Navigation extends UnicastRemoteObject implements NavigationInterface {
     private GPS gps;
@@ -29,12 +30,17 @@ public class Navigation extends UnicastRemoteObject implements NavigationInterfa
     }
 
 
-    public boolean SendHeartBeat() throws RemoteException {
+    public HashMap SendHeartBeat() throws RemoteException {
+        HashMap<String, Boolean> heartBeat = new HashMap<String, Boolean>();
         boolean foundNewRoute = gps.findNewRoute();
+        heartBeat.put("Find_New_Route_Test", foundNewRoute);
         boolean isDisconnected = gps.isDisconnected();
+        heartBeat.put("Is_Disconnected_Test", isDisconnected);
         boolean checkedSensors = checkSensors();
-        boolean heartBeat = ((foundNewRoute || isDisconnected) && checkedSensors);
-        this.setAlive(heartBeat);
+        heartBeat.put("Sensor_Check", checkedSensors);
+        boolean alive = ((foundNewRoute || isDisconnected) && checkedSensors);
+        heartBeat.put("Is_Alive", alive);
+        this.setAlive(alive);
         return heartBeat;
     }
 
